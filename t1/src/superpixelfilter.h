@@ -26,6 +26,7 @@ private:
     float getDistance(float ds, float dc, SuperPixel& sp);
     void updateSuperPixels();
     void updateDistances();
+    void removeOrphaned();
     void repaintPixels();
 
     Image *m_image;
