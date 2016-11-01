@@ -5,14 +5,20 @@
  * Created on October 22, 2016, 11:24 AM
  */
 
+
+// Reference: http://www.learnopengles.com/tag/per-vertex-lighting/
+
 using namespace std;
 #include "GraphicsShader.h"
 #include "OpenGLMatrixManager.h"
+#include "Vec3.h"
 #include <GLFW/glfw3.h>
 #include <fstream>
 #include <cstdlib>
 #include <cstdio>
 #include <vector>
+
+Vec3<float> eye(0, 0, -50);
 
 
 /**
@@ -87,6 +93,22 @@ static void keyCallback( GLFWwindow* window, int key, int scancode, int action, 
 
     if (key == GLFW_KEY_2 && action == GLFW_PRESS)
         g_Scale *= 1.5;
+
+    if (key == GLFW_KEY_A)
+        eye.addX(-5);
+    if (key == GLFW_KEY_D)
+        eye.addX(5);
+    if (key == GLFW_KEY_W)
+        eye.addY(-5);
+    if (key == GLFW_KEY_S)
+        eye.addY(5);
+
+    if (key == GLFW_KEY_Q)
+        eye.addZ(-5);
+    if (key == GLFW_KEY_E)
+        eye.addZ(5);
+
+    printf("%.2f %.2f %.2f\n", eye.getX(), eye.getY(), eye.getZ());
 }
 
 
@@ -96,8 +118,8 @@ static void resizeCallback( GLFWwindow* window, int w, int h )
     //Define o viewport.
     glViewport( 0, 0, w, h );
 
-    projectionMatrix.loadIdentity( );
-    projectionMatrix.ortho( -10, 10, -10, 10, -1, 1 );
+    //projectionMatrix.loadIdentity( );
+    //projectionMatrix.ortho( -10, 10, -10, 10, -1, 1 );
 }
 
 bool loadModel(const std::string& filename, std::vector<float>& vertices, std::vector<unsigned int>& triangles)
@@ -115,10 +137,8 @@ bool loadModel(const std::string& filename, std::vector<float>& vertices, std::v
 
     for(int i = 0; i < numVertices; ++i)
         fscanf(fp, "%f %f %f", &vertices[3*i], &vertices[3*i+1], &vertices[3*i+2]);
-    for(int i = 0; i < numTriangles; ++i) {
-        fscanf(fp, "3");
-        fscanf(fp, "%d %d %d", &triangles[3*i], &triangles[3*i+1], &triangles[3*i+2]);
-    }
+    for(int i = 0; i < numTriangles; ++i)
+        fscanf(fp, "%*d %d %d %d", &triangles[3*i], &triangles[3*i+1], &triangles[3*i+2]);
 
     fclose(fp);
     return true;
@@ -129,6 +149,8 @@ bool loadModel(const std::string& filename, std::vector<float>& vertices, std::v
 int main( void )
 {
     setvbuf(stdout, NULL, _IONBF, 0);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     std::vector<float> vertices;
     std::vector<unsigned int> triangles;
@@ -136,6 +158,21 @@ int main( void )
     if(!loadModel("models/flower.off", vertices, triangles))
     //if(!loadModel("models/singleTriangle.off", vertices, triangles))
         return -1;
+
+    std::vector<float> trianglesNormal(triangles.size());
+    for(int i = 0; i < triangles.size() / 3; ++i) {
+        int vertex0 = triangles[3*i+0];
+        int vertex1 = triangles[3*i+1];
+        int vertex2 = triangles[3*i+2];
+        Vec3<float> v0 = Vec3<float>(vertices[3*vertex0], vertices[3*vertex0+1], vertices[3*vertex0+2]);
+        Vec3<float> v1 = Vec3<float>(vertices[3*vertex1], vertices[3*vertex1+1], vertices[3*vertex1+2]);
+        Vec3<float> v2 = Vec3<float>(vertices[3*vertex2], vertices[3*vertex2+1], vertices[3*vertex2+2]);
+        Vec3<float> normal = Vec3<float>::crossProduct(v1 - v0, v2 - v0);
+        normal.normalise();
+        trianglesNormal[3*i+0] = normal.getX();
+        trianglesNormal[3*i+1] = normal.getY();
+        trianglesNormal[3*i+2] = normal.getZ();
+    }
 
     //Define uma callback de erro.
     glfwSetErrorCallback( errorCallback );
@@ -168,8 +205,9 @@ int main( void )
     //Enquanto a janela nao precisar ser fechada. Executa o loop.
     while (!glfwWindowShouldClose( window ))
     {
+        Vec3<float> light = eye;
         //Limpa a janela.
-        glClear( GL_COLOR_BUFFER_BIT );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GLenum err = glGetError( );
 
         if (err != GL_NO_ERROR)
@@ -184,11 +222,11 @@ int main( void )
         glViewport( 0, 0, w, h );
 
         projectionMatrix.loadIdentity( );
-        projectionMatrix.perspective(60, w / h, 1, 1000);
+        projectionMatrix.perspective(60, w / (float)h, 1, 1000);
 
         //Aplica uma transformacao de escala.
         modelViewMatrix.push( );
-        projectionMatrix.lookAt(0, 0, -100, 0, 0, 10, 0, 1, 0);
+        modelViewMatrix.lookAt(eye.getX(), eye.getY(), eye.getZ(), 0, 0, 0, 0, 1, 0);
         modelViewMatrix.scale( g_Scale, g_Scale, 0 );
 
         //compila o shader se este nao tiver sido compilado ainda
@@ -204,6 +242,19 @@ int main( void )
         int vertexParam = glGetAttribLocation( glShader, "vtx" );
         glVertexAttribPointer( vertexParam, 3, GL_FLOAT, GL_FALSE, 0, vertices.data() );
         glEnableVertexAttribArray( vertexParam );
+
+        // Transfere as normais para a placa.
+        int normalParam = glGetAttribLocation( glShader, "normal" );
+        glVertexAttribPointer( normalParam, 3, GL_FLOAT, GL_FALSE, 0, trianglesNormal.data() );
+        glEnableVertexAttribArray( normalParam );
+
+        // Transfere light para a placa.
+        int lightParam = glGetUniformLocation( glShader, "light" );
+        glUniform4f( lightParam, light.getX(), light.getY(), light.getZ(), 1);
+
+        // Transfere eye para a placa.
+        int eyeParam = glGetUniformLocation( glShader, "eye" );
+        glUniform4f( eyeParam, eye.getX(), eye.getY(), eye.getZ(), 1);
 
         //Obtem a modelview projection (mvp)
         {
