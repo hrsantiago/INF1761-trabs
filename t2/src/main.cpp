@@ -12,6 +12,7 @@ using namespace std;
 #include <fstream>
 #include <cstdlib>
 #include <cstdio>
+#include <vector>
 
 
 /**
@@ -29,6 +30,7 @@ OpenGLMatrixManager modelViewMatrix;
  */
 GraphicsShader* shader;
 
+float g_Scale = 1;
 
 
 std::string readFile( const char* name )
@@ -79,6 +81,12 @@ static void keyCallback( GLFWwindow* window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose( window, GLFW_TRUE );
+
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+        g_Scale /= 1.5;
+
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+        g_Scale *= 1.5;
 }
 
 
@@ -92,10 +100,43 @@ static void resizeCallback( GLFWwindow* window, int w, int h )
     projectionMatrix.ortho( -10, 10, -10, 10, -1, 1 );
 }
 
+bool loadModel(const std::string& filename, std::vector<float>& vertices, std::vector<unsigned int>& triangles)
+{
+    FILE *fp = fopen(filename.c_str(), "r");
+    if(!fp)
+        return false;
+    fscanf(fp, "OFF");
+
+    int numVertices = 0;
+    int numTriangles = 0;
+    fscanf(fp, "%d %d 0", &numVertices, &numTriangles);
+    vertices.resize(3 * numVertices);
+    triangles.resize(3 * numTriangles);
+
+    for(int i = 0; i < numVertices; ++i)
+        fscanf(fp, "%f %f %f", &vertices[3*i], &vertices[3*i+1], &vertices[3*i+2]);
+    for(int i = 0; i < numTriangles; ++i) {
+        fscanf(fp, "3");
+        fscanf(fp, "%d %d %d", &triangles[3*i], &triangles[3*i+1], &triangles[3*i+2]);
+    }
+
+    fclose(fp);
+    return true;
+}
+
 
 
 int main( void )
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    std::vector<float> vertices;
+    std::vector<unsigned int> triangles;
+    //if(!loadModel("models/bimba.off", vertices, triangles))
+    if(!loadModel("models/flower.off", vertices, triangles))
+    //if(!loadModel("models/singleTriangle.off", vertices, triangles))
+        return -1;
+
     //Define uma callback de erro.
     glfwSetErrorCallback( errorCallback );
 
@@ -143,14 +184,12 @@ int main( void )
         glViewport( 0, 0, w, h );
 
         projectionMatrix.loadIdentity( );
-        projectionMatrix.ortho( -10, 10, -10, 10, -1, 1 );
-
-        float coords[4 * 2] = { 0, 0, 1, 0, 1, 1, 0, 1 };
-        unsigned int triangleMesh[6] = { 0, 1, 2, 0, 2, 3 };
+        projectionMatrix.perspective(60, w / h, 1, 1000);
 
         //Aplica uma transformacao de escala.
         modelViewMatrix.push( );
-        modelViewMatrix.scale( 5, 5, 0 );
+        projectionMatrix.lookAt(0, 0, -100, 0, 0, 10, 0, 1, 0);
+        modelViewMatrix.scale( g_Scale, g_Scale, 0 );
 
         //compila o shader se este nao tiver sido compilado ainda
         if (!shader->isAllocated( ))
@@ -163,7 +202,7 @@ int main( void )
 
         //Transfere os vertices para a placa.
         int vertexParam = glGetAttribLocation( glShader, "vtx" );
-        glVertexAttribPointer( vertexParam, 2, GL_FLOAT, GL_FALSE, 0, coords );
+        glVertexAttribPointer( vertexParam, 3, GL_FLOAT, GL_FALSE, 0, vertices.data() );
         glEnableVertexAttribArray( vertexParam );
 
         //Obtem a modelview projection (mvp)
@@ -184,7 +223,7 @@ int main( void )
         modelViewMatrix.pop( );
 
         //Desenha os elementos.
-        glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, triangleMesh );
+        glDrawElements( GL_TRIANGLES, triangles.size(), GL_UNSIGNED_INT, triangles.data() );
 
         //Descarrega o programa da placa.
         shader->unload( );
