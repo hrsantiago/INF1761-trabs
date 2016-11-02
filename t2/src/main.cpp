@@ -18,7 +18,10 @@ using namespace std;
 #include <cstdio>
 #include <vector>
 
-Vec3<float> eye(0, 0, -50);
+Vec3<float> eye(15, -430, 265); // apple eye
+//Vec3<float> eye(0, 0, 50);
+Vec3<float> center(0, 0, 0);
+Vec3<float> up(0, 1, 0);
 
 
 /**
@@ -34,7 +37,9 @@ OpenGLMatrixManager modelViewMatrix;
 /**
  * A shader pointer.
  */
-GraphicsShader* shader;
+GraphicsShader* vertexLightShader;
+GraphicsShader* fragmentLightShader;
+GraphicsShader* shader = nullptr;
 
 float g_Scale = 1;
 
@@ -65,13 +70,24 @@ void initializeCanvas( )
     glClearColor( 1.0, 1.0, 1.0, 1.0 );
 
     //Aloca shader.
-    shader = new GraphicsShader( );
+    vertexLightShader = new GraphicsShader( );
 
-    std::string vertexShader = readFile( "shaders/example.vert" );
-    shader->setVertexProgram( vertexShader.c_str( ), vertexShader.size( ) );
+    std::string vertexShader1 = readFile( "shaders/vertexlight.vert" );
+    vertexLightShader->setVertexProgram( vertexShader1.c_str( ), vertexShader1.size( ) );
 
-    std::string fragmentShader = readFile( "shaders/example.frag" );
-    shader->setFragmentProgram( fragmentShader.c_str( ), fragmentShader.size( ) );
+    std::string fragmentShader1 = readFile( "shaders/vertexlight.frag" );
+    vertexLightShader->setFragmentProgram( fragmentShader1.c_str( ), fragmentShader1.size( ) );
+
+
+    fragmentLightShader = new GraphicsShader( );
+
+    std::string vertexShader2 = readFile( "shaders/fragmentlight.vert" );
+    fragmentLightShader->setVertexProgram( vertexShader2.c_str( ), vertexShader2.size( ) );
+
+    std::string fragmentShader2 = readFile( "shaders/fragmentlight.frag" );
+    fragmentLightShader->setFragmentProgram( fragmentShader2.c_str( ), fragmentShader2.size( ) );
+
+    shader = vertexLightShader;
 }
 
 
@@ -108,6 +124,14 @@ static void keyCallback( GLFWwindow* window, int key, int scancode, int action, 
     if (key == GLFW_KEY_E)
         eye.addZ(5);
 
+    if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+        if(shader == vertexLightShader)
+            shader = fragmentLightShader;
+        else
+            shader = vertexLightShader;
+    }
+
+
     printf("%.2f %.2f %.2f\n", eye.getX(), eye.getY(), eye.getZ());
 }
 
@@ -122,7 +146,7 @@ static void resizeCallback( GLFWwindow* window, int w, int h )
     //projectionMatrix.ortho( -10, 10, -10, 10, -1, 1 );
 }
 
-bool loadModel(const std::string& filename, std::vector<float>& vertices, std::vector<unsigned int>& triangles)
+bool loadModel(const std::string& filename, std::vector<Vec3<float>>& vertices, std::vector<unsigned int>& triangles)
 {
     FILE *fp = fopen(filename.c_str(), "r");
     if(!fp)
@@ -132,11 +156,14 @@ bool loadModel(const std::string& filename, std::vector<float>& vertices, std::v
     int numVertices = 0;
     int numTriangles = 0;
     fscanf(fp, "%d %d 0", &numVertices, &numTriangles);
-    vertices.resize(3 * numVertices);
+    vertices.resize(numVertices);
     triangles.resize(3 * numTriangles);
 
-    for(int i = 0; i < numVertices; ++i)
-        fscanf(fp, "%f %f %f", &vertices[3*i], &vertices[3*i+1], &vertices[3*i+2]);
+    for(int i = 0; i < numVertices; ++i) {
+        float x, y, z;
+        fscanf(fp, "%f %f %f", &x, &y, &z);
+        vertices[i] = Vec3<float>(x, y, z);
+    }
     for(int i = 0; i < numTriangles; ++i)
         fscanf(fp, "%*d %d %d %d", &triangles[3*i], &triangles[3*i+1], &triangles[3*i+2]);
 
@@ -149,30 +176,35 @@ bool loadModel(const std::string& filename, std::vector<float>& vertices, std::v
 int main( void )
 {
     setvbuf(stdout, NULL, _IONBF, 0);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
 
-    std::vector<float> vertices;
+    std::vector<Vec3<float>> vertices;
     std::vector<unsigned int> triangles;
     //if(!loadModel("models/bimba.off", vertices, triangles))
-    if(!loadModel("models/flower.off", vertices, triangles))
+    if(!loadModel("models/apple.off", vertices, triangles))
     //if(!loadModel("models/singleTriangle.off", vertices, triangles))
         return -1;
 
-    std::vector<float> trianglesNormal(triangles.size());
+    std::vector<Vec3<float>> verticesNormal(vertices.size());
+
     for(int i = 0; i < triangles.size() / 3; ++i) {
         int vertex0 = triangles[3*i+0];
         int vertex1 = triangles[3*i+1];
         int vertex2 = triangles[3*i+2];
-        Vec3<float> v0 = Vec3<float>(vertices[3*vertex0], vertices[3*vertex0+1], vertices[3*vertex0+2]);
-        Vec3<float> v1 = Vec3<float>(vertices[3*vertex1], vertices[3*vertex1+1], vertices[3*vertex1+2]);
-        Vec3<float> v2 = Vec3<float>(vertices[3*vertex2], vertices[3*vertex2+1], vertices[3*vertex2+2]);
+        Vec3<float> v0 = vertices[vertex0];
+        Vec3<float> v1 = vertices[vertex1];
+        Vec3<float> v2 = vertices[vertex2];
         Vec3<float> normal = Vec3<float>::crossProduct(v1 - v0, v2 - v0);
         normal.normalise();
-        trianglesNormal[3*i+0] = normal.getX();
-        trianglesNormal[3*i+1] = normal.getY();
-        trianglesNormal[3*i+2] = normal.getZ();
+
+        verticesNormal[vertex0] += normal;
+        verticesNormal[vertex1] += normal;
+        verticesNormal[vertex2] += normal;
     }
+
+    for(int i = 0; i < verticesNormal.size(); ++i) {
+        verticesNormal[i].normalise();
+    }
+
 
     //Define uma callback de erro.
     glfwSetErrorCallback( errorCallback );
@@ -202,6 +234,9 @@ int main( void )
     //Inicializa o canvas.
     initializeCanvas( );
 
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
     //Enquanto a janela nao precisar ser fechada. Executa o loop.
     while (!glfwWindowShouldClose( window ))
     {
@@ -222,12 +257,12 @@ int main( void )
         glViewport( 0, 0, w, h );
 
         projectionMatrix.loadIdentity( );
-        projectionMatrix.perspective(60, w / (float)h, 1, 1000);
+        projectionMatrix.perspective(60, w / (float)h, 1, 10000);
 
         //Aplica uma transformacao de escala.
         modelViewMatrix.push( );
-        modelViewMatrix.lookAt(eye.getX(), eye.getY(), eye.getZ(), 0, 0, 0, 0, 1, 0);
-        modelViewMatrix.scale( g_Scale, g_Scale, 0 );
+        modelViewMatrix.lookAt(eye.getX(), eye.getY(), eye.getZ(), center.getX(), center.getY(), center.getZ(), up.getX(), up.getY(), up.getZ());
+        modelViewMatrix.scale( g_Scale, g_Scale, 1 );
 
         //compila o shader se este nao tiver sido compilado ainda
         if (!shader->isAllocated( ))
@@ -245,7 +280,7 @@ int main( void )
 
         // Transfere as normais para a placa.
         int normalParam = glGetAttribLocation( glShader, "normal" );
-        glVertexAttribPointer( normalParam, 3, GL_FLOAT, GL_FALSE, 0, trianglesNormal.data() );
+        glVertexAttribPointer( normalParam, 3, GL_FLOAT, GL_FALSE, 0, verticesNormal.data() );
         glEnableVertexAttribArray( normalParam );
 
         // Transfere light para a placa.

@@ -1,4 +1,4 @@
-#version 410
+#version 130
 
 uniform mat4 mvp;
 in vec4 vtx;
@@ -19,7 +19,7 @@ void main(void)
 	vec4 Id = 0.7 * dot(l, normal) * vec4(1, 0, 0, 1); // diffuse
 	vec4 Ip = Ia + Is + Id;
 
-    gl_Position = mvp * vtx;
-    v_Color = Ip;
+	gl_Position = mvp * vtx;
+	v_Color = Ip;
 }
 
