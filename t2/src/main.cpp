@@ -67,7 +67,7 @@ std::string readFile( const char* name )
 
 void initializeCanvas( )
 {
-    glClearColor( 1.0, 1.0, 1.0, 1.0 );
+    glClearColor( 0.0, 0.0, 0.0, 1.0 );
 
     //Aloca shader.
     vertexLightShader = new GraphicsShader( );

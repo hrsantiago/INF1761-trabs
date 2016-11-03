@@ -15,11 +15,10 @@ void main(void)
 	vec4 r = 2 * dot(l, normal) * normal - l;
 
 	vec4 Ia = 0.1 * vec4(1, 1, 1, 1); // ambient
-	vec4 Is = 0.2 * pow(dot(r, v), 1) * vec4(1, 1, 1, 1); // specular
-	vec4 Id = 0.7 * dot(l, normal) * vec4(1, 0, 0, 1); // diffuse
+	vec4 Is = 0.5 * pow(max(dot(r, v), 0), 40) * vec4(1, 1, 1, 1); // specular
+	vec4 Id = 1 * max(dot(l, normal), 0) * vec4(1, 0, 0, 1); // diffuse
 	vec4 Ip = Ia + Is + Id;
 
 	gl_Position = mvp * vtx;
 	v_Color = Ip;
 }
-
