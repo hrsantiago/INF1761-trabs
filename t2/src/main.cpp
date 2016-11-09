@@ -22,6 +22,10 @@ Vec3<float> eye(15, -430, 265); // apple eye
 //Vec3<float> eye(0, 0, 50);
 Vec3<float> center(0, 0, 0);
 Vec3<float> up(0, 1, 0);
+std::vector<Vec3<float>> lights = { // Max of 10 lights, there're some hacks to light movement, so minimum of 2.
+    Vec3<float>(15, -430, 265),
+    Vec3<float>(15, -430, 265)
+};
 
 
 /**
@@ -240,7 +244,6 @@ int main( void )
     //Enquanto a janela nao precisar ser fechada. Executa o loop.
     while (!glfwWindowShouldClose( window ))
     {
-        Vec3<float> light = eye;
         //Limpa a janela.
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GLenum err = glGetError( );
@@ -283,9 +286,20 @@ int main( void )
         glVertexAttribPointer( normalParam, 3, GL_FLOAT, GL_FALSE, 0, verticesNormal.data() );
         glEnableVertexAttribArray( normalParam );
 
+
+        // Light changes
+        //lights[0] = eye;
+        static float angle = 0;
+        angle += 0.1;
+        lights[0] = Vec3<float>(400 * std::cos(angle), 400 * std::sin(angle), 0);
+        //lights[1] = Vec3<float>(400 * std::cos(angle), 0, 400 * std::sin(angle));
+
         // Transfere light para a placa.
-        int lightParam = glGetUniformLocation( glShader, "light" );
-        glUniform4f( lightParam, light.getX(), light.getY(), light.getZ(), 1);
+        int lightParam = glGetUniformLocation( glShader, "lights" );
+        glUniform3fv( lightParam, lights.size(), (GLfloat*)lights.data());
+
+        int nLightParam = glGetUniformLocation( glShader, "nLights" );
+        glUniform1i( nLightParam, lights.size());
 
         // Transfere eye para a placa.
         int eyeParam = glGetUniformLocation( glShader, "eye" );
