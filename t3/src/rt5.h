@@ -5,19 +5,13 @@
 #include <vector>
 #include <map>
 #include "image.h"
+#include "vec3.h"
 
 struct RGB
 {
     float r;
     float g;
     float b;
-};
-
-struct Position
-{
-    float x;
-    float y;
-    float z;
 };
 
 struct Position2D
@@ -35,9 +29,9 @@ struct Scene
 
 struct Camera
 {
-    Position eye;
-    Position ref;
-    Position up;
+    Vec3f eye;
+    Vec3f ref;
+    Vec3f up;
     float fov;
     float near;
     float far;
@@ -59,7 +53,7 @@ struct Material
 
 struct Light
 {
-    Position pos;
+    Vec3f pos;
     RGB intensity;
 };
 
@@ -67,22 +61,22 @@ struct Sphere
 {
     std::string material;
     float r;
-    Position pos;
+    Vec3f pos;
 };
 
 struct Box
 {
     std::string material;
-    Position bottomLeft;
-    Position topRight;
+    Vec3f bottomLeft;
+    Vec3f topRight;
 };
 
 struct Triangle
 {
     std::string material;
-    Position v1;
-    Position v2;
-    Position v3;
+    Vec3f v1;
+    Vec3f v2;
+    Vec3f v3;
     Position2D tv1;
     Position2D tv2;
     Position2D tv3;
@@ -99,7 +93,7 @@ private:
 
     std::string parseString(FILE *fp);
     RGB parseRGB(FILE *fp);
-    Position parsePosition(FILE *fp);
+    Vec3f parsePosition(FILE *fp);
     Position2D parsePosition2D(FILE *fp);
     Scene parseScene(FILE *fp);
     Camera parseCamera(FILE *fp);

@@ -75,13 +75,13 @@ RGB RT5::parseRGB(FILE *fp)
     return rgb;
 }
 
-Position RT5::parsePosition(FILE *fp)
+Vec3f RT5::parsePosition(FILE *fp)
 {
-    Position pos;
-    fscanf(fp, "%f", &pos.x);
-    fscanf(fp, "%f", &pos.y);
-    fscanf(fp, "%f", &pos.z);
-    return pos;
+    float x, y, z;
+    fscanf(fp, "%f", &x);
+    fscanf(fp, "%f", &y);
+    fscanf(fp, "%f", &z);
+    return Vec3f(x, y, z);
 }
 
 Position2D RT5::parsePosition2D(FILE *fp)
