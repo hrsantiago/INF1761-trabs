@@ -1,6 +1,24 @@
 #include "rt5.h"
 #include <cstdio>
 
+Image RT5::render()
+{
+    int w = m_camera.width;
+    int h = m_camera.height;
+    Image image(w, h);
+
+    renderBackground(image); // Maybe if not intersects any object, draw this pixel? Seems better
+
+    for(int i = 0; i < h; ++i) {
+        for(int j = 0; j < w; ++j) {
+
+        }
+    }
+
+
+    return image;
+}
+
 bool RT5::load(const std::string& filename)
 {
     FILE *fp = fopen(filename.c_str(), "r");
@@ -31,6 +49,14 @@ bool RT5::load(const std::string& filename)
 
     fclose(fp);
     return true;
+}
+
+void RT5::renderBackground(Image& image)
+{
+    Pixel backgroundPixel(m_scene.backgroundColor.r, m_scene.backgroundColor.g, m_scene.backgroundColor.b);
+    image.fill(backgroundPixel);
+
+    // TODO render bg texture
 }
 
 std::string RT5::parseString(FILE *fp)
@@ -102,6 +128,8 @@ Material RT5::parseMaterial(FILE *fp)
     fscanf(fp, "%f", &material.refraction);
     fscanf(fp, "%f", &material.opacity);
     material.texture = parseString(fp);
+    if(material.texture == "null")
+        material.texture = "";
     return material;
 }
 

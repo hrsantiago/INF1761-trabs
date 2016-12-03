@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "image.h"
 
 struct RGB
 {
@@ -90,9 +91,12 @@ struct Triangle
 class RT5
 {
 public:
+    Image render();
     bool load(const std::string& filename);
 
 private:
+    void renderBackground(Image& image);
+
     std::string parseString(FILE *fp);
     RGB parseRGB(FILE *fp);
     Position parsePosition(FILE *fp);

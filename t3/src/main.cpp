@@ -18,6 +18,8 @@ int main(int argc, char** argv)
     }
 
     printf("Rendering scene: %s\n", filename.c_str());
+    Image image = rt5.render();
+    image.saveBMP("out.bmp");
 
     return 0;
 }

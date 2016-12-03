@@ -9,9 +9,12 @@ class Image
 {
 public:
     Image() {}
+    Image(int width, int height);
 
     void loadBMP(const std::string& filename);
     void saveBMP(const std::string& filename);
+
+    void fill(const Pixel& p);
 
     Pixel& pixel(int x, int y) { return m_pixels[y * m_width + x]; }
 

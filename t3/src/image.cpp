@@ -1,6 +1,13 @@
 #include "image.h"
 #include "imageloader.h"
 
+Image::Image(int width, int height)
+{
+    m_width = width;
+    m_height = height;
+    m_pixels.resize(m_width * m_height);
+}
+
 void Image::loadBMP(const std::string& filename)
 {
     float *rgb;
@@ -34,6 +41,13 @@ void Image::saveBMP(const std::string& filename)
     ImageLoader l;
     l.writeBMP(rgb, m_width, m_height, filename.c_str());
     delete rgb;
+}
+
+void Image::fill(const Pixel& p)
+{
+    for(int i = 0; i < m_height; i++)
+        for(int j = 0; j < m_width; j++)
+            pixel(j, i) = p;
 }
 
 void Image::rgbToLab()
