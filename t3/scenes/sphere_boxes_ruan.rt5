@@ -1,0 +1,9 @@
+RT 5
+SCENE 0.4 0.4 0.4   0.3 0.3 0.5 null
+CAMERA 100 40 40 0 0 0 0 1 0 90 30 230 400 400
+MATERIAL blue 0 0 1   1 1 1  50  0  1.3  0.3  null
+MATERIAL yellow 0.7 0.7 0   1 1 1  40  0  0  1  null
+LIGHT 40 120 0  1 1 1
+SPHERE blue      25      0 20 0
+BOX    yellow    -80 -50 -50   50 -45 50
+BOX    yellow    -80 -50 -60   50 50 -50

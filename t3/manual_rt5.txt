@@ -1,0 +1,65 @@
+RT 5
+!-----------------------------------------------------------!
+!Parametros da cena :                                       !
+! r. g. b. - cor de fundo (se imagem sem textura)           !
+! r. g. b. - intensidade rgb da luz ambiente                !
+! img.ext  - textura a ser utilizada (NULL para nao usar)   !
+!-----------------------------------------------------------!
+SCENE  0.4 0.4 0.4   0.12 0.12 0.12   null
+!-----------------------------------------------------------!
+!Parametros da camera :                                     !
+! x. y. z. - posicao do eye                                 !
+! x. y. z. - posicao do ref                                 !
+! x. y. z. - vetor up                                       !
+! a.       - angulo de abertura da camera                   !
+! n. f.    - planos near e far                              !
+! w h      - numero de linhas e colunas da imagem (w e h)   !
+!-----------------------------------------------------------!
+CAMERA 100 40 40   0 0 0   0 1 0   90   10 100   400 400
+!-----------------------------------------------------------!
+!Parametros do material :                                   !
+! name     - nome do material                               !
+! r. g. b. - Kd                                             !
+! r. g. b. - Ks                                             !
+! n        - n  (especular)                                 !
+! k.       - coeficiente de reflexao  (espelho)             !
+! n.       - indice de refracao, se opacidade < 1 (snell)   !
+! o        - opacidade (0 = transparente, 1 = opaco)        !
+! img.ext  - textura a ser utilizada (NULL para nao usar)   !
+!-----------------------------------------------------------!
+MATERIAL  plastico  0 0 1   1 1 1  50  0  0  1  estrela.jpg
+MATERIAL marmore 0.7 0.7 0   1 1 1  40  0  0  1 marmoreb.jpg
+
+!-----------------------------------------------------------!
+!Parametros da luz :                                        !
+! x. y. z. - posicao                                        !
+! r. g. b. - intensidade rgb                                !
+!-----------------------------------------------------------!
+LIGHT 40 120 20 1 1 1
+!-----------------------------------------------------------!
+!Parametros da esfera :                                     !
+! name     - nome do material                               !
+! r.       - raio                                           !
+! x. y. z. - posicao                                        !
+!-----------------------------------------------------------!
+SPHERE plastico 25      0 20 0
+!-----------------------------------------------------------!
+!Parametros da caixa (cubo ou paralelepipedo) :             !
+! name     - nome do material                               !
+! x. y. z. - canto inferior esquerdo                        !
+! x. y. z. - canto superior direito                         !
+!-----------------------------------------------------------!
+BOX   marmore    -80 -50 -50   50 -45 50
+
+
+!-----------------------------------------------------------!
+!Parametros do triangulo :                                  !
+! m        - material                                       !
+! x. y. z. - coordenadas do vertice 1                       !
+! x. y. z. - coordenadas do vertice 2                       !
+! x. y. z. - coordenadas do vertice 3                       !
+! u. v.    - coordenadas de textura do vertice 1            !
+! u. v.    - coordenadas de textura do vertice 2            !
+! u. v.    - coordenadas de textura do vertice 3            !
+!-----------------------------------------------------------!
+TRIANGLE 1  -80 -40 50   50 -40 50   50 -40 500    0 0   1 0   1 1

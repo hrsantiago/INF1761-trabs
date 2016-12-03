@@ -1,0 +1,17 @@
+RT 5
+SCENE 0.1 0.1 0.3   0.2 0.2 0.2  null
+CAMERA 0 1 8 0 0 0 0 1 1 100 1 100 400 400
+MATERIAL green 0 1 0   1 1 1  60  0.8  0  1  null
+MATERIAL formica 0 0 0   1 1 1  40  0.6  0  1  formica.jpg
+MATERIAL red  1 0 0   1 1 1  60  0.8  0  1  null
+MATERIAL blue 0 0 1   1 1 1  60  0.8  0  1  null
+MATERIAL magenta 0 1 1   1 1 1  60  0.8  0  1  null
+MATERIAL ciano 1 0 1   1 1 1  20  0.8  0  1  null
+LIGHT  40 20 10   0.5 0.5 0.5
+LIGHT -40 40 10   0.5 0.5 0.5
+SPHERE green    3      0 3 -12
+SPHERE red      3      -3 -3 -10
+SPHERE blue     3      3 -3 -10
+SPHERE magenta  3      -3 1 -26
+SPHERE ciano    3      3 1 -26
+BOX    formica  -30 -8 -40   30 -7 0

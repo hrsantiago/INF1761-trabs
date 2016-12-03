@@ -1,0 +1,10 @@
+RT 5
+SCENE 0.1 0.1 0.1  0.01 0.01 0 sky.jpg
+CAMERA 0 0 150 0 0 0 0 1 0 90 1 100 400 400
+MATERIAL yellow 1 1 0   0.8 0.8 0.8  65  0.9  0  1  null
+MATERIAL black 0 0 0   1 1 1  45  0.9  0  1  null
+MATERIAL blue 0.2 0.2 0.3   0.3 0.3 0.4  0  0  0  1  null
+LIGHT 0 400 80 0.7 0.7 0.7
+SPHERE black   40.000      45.000 0.000 0.000
+SPHERE yellow   40.000      -45.000 0.000 0.000
+BOX    blue    -200.000 -46.000 -60.000   200.000 -44.000 60.000

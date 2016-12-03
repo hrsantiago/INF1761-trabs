@@ -1,0 +1,9 @@
+RT 5
+SCENE 0 0 0.4 0.12 0.12 0.12 null
+CAMERA 35 2 1.7 0 -15 0 0 0 1 60 1 100 400 400
+MATERIAL brick 1 0 0   0 0 0  50  0  0  1  RedBricks.jpg
+LIGHT 35 2 2 1 1 1
+TRIANGLE  brick   30.   0.  0.      0.  0. 0.     0.   0.  3.   0. 0.   30. 0.   30. 1. 
+TRIANGLE  brick   30.   0.  0.      0.  0. 3.    30.   0.  3.   0. 0.   30. 1.    0. 1. 
+TRIANGLE  brick   30. -30.  0.     30.  0. 0.    30.   0.  3.   0. 0.   30. 0.   30. 1. 
+TRIANGLE  brick   30. -30.  0.     30.  0. 3.    30. -30.  3.   0. 0.   3. 1.   0. 1. 

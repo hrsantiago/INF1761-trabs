@@ -1,0 +1,53 @@
+RT 5
+SCENE 0 0.5 1   0.3 0.3 0.3 null
+CAMERA 280 -60 245 0 -100 245 0 1 0 90 1 100 400 400    
+MATERIAL 0.3 0.2 0.0   0 0 0  30  0  0  1  null              ! madeira
+MATERIAL 0.0 0.0 0.0   0 0 0  30  0  0  1  null              ! lustre
+MATERIAL 0.8 0.8 0.8   0 0 0  30  0  0  1  parede.jpg        ! parede
+MATERIAL 0.6 0.8 0.8   0 0 0  30  0  0  1  null              ! teo\to
+MATERIAL 0.3 0.3 0.0   0 0 0  30  0  0  1  wood.jpg          ! piso
+MATERIAL 0.4 0.4 0.4   0 0 0  30  0  0  1  null              ! mesa
+MATERIAL 0.6 0.6 0.0   0 0 0  0  0  0  1  null               ! tapete
+MATERIAL 0.3 0.2 0.0   0 0 0  30  0  0  1  null              ! estante
+MATERIAL 0.4 0.0 0.0   0.8 0.2 0.2  50  0  0  1  null        ! bola
+MATERIAL 0.0 0.0 0.4   0.2 0.2 0.8  30  0  0  1  null        ! caixa
+MATERIAL 0 0 0   0.4 0.4 0.392  80  0.9  0  1  null          ! quadro
+MATERIAL 0 0 0   0.4 0.4 0.392  80  0  0  1  null            ! desenho 1
+MATERIAL 0 0 0   0.4 0.4 0.392  80  0  0  1  null            ! desenho 2 
+MATERIAL 0 0 0   0.4 0.4 0.392  80  0  0  1  null            ! desenho 3
+MATERIAL 0 0 0   0.4 0.4 0.392  80  0  0  1  null            ! desenho 4
+MATERIAL 0 0 0   0.4 0.4 0.392  80  0  0  1  null            ! desenho 5
+LIGHT 0 12 245 0.8 0.8 0.8
+LIGHT -100 0 -1000 0.9 0.9 0.9
+LIGHT 900 -50  245 0.4 0.4 0.4
+SPHERE 1   10.    0. 30. 245.
+SPHERE 8   15.   -150.  -103. 150.                         ! bola
+BOX 2   -200.  -165.   95.      200.  -88.75 105.
+BOX 2   -200.   -21.25 95.      200.   35.   105.
+BOX 2   -200.  -165.   95.      -67.5  35.   105.
+BOX 2     67.5 -165.   95.      200.   35.   105.
+BOX 2   -200. -165. 395.      200.   35. 405.          ! parede esquerda
+BOX 2   -205. -165.  95.     -200.   35. 405.          ! parede fundo
+BOX 3   -200.   35.  95.      200.   40. 405.          ! teto
+BOX 4   -200. -170.  95.      200. -165. 405.          ! piso
+BOX 5    -70. -165. 390.      -65. -100. 395.          ! |
+BOX 5     65. -165. 390.       70. -100. 395.          ! |- pes da mesa
+BOX 5    -70. -165. 280.      -65. -100. 285.          ! |
+BOX 5     65. -165. 280.       70. -100. 285.          ! |
+BOX 5    -70. -150. 280.      -68. -125. 395.          ! lateral da mesa
+BOX 5     68. -150. 280.       70. -125. 395.          ! lateral da mesa
+BOX 5    -70. -100. 280.       70.  -90. 395.          ! tampa da mesa
+BOX 0    -68.  -89.  95.      -65.  -21. 105.          ! |
+BOX 0     65.  -89.  95.       68.  -21. 105.          ! |
+BOX 0    -68.  -24.  95.       68.  -21. 105.          ! |- armacao janela
+BOX 0    -68.  -89.  95.       68.  -86. 105.          ! |
+BOX 0     -1.  -89. 100.        1.  -21. 105.          ! |
+BOX 0    -68.  -55. 100.       68.  -52. 105.          ! |
+BOX 6   -150. -166. 145.      150. -164. 325.          ! tapete
+BOX 7   -200. -120. 105.     -100. -118. 205.          ! tampa da estante
+BOX 7   -200. -165. 110.     -100. -120. 112.          ! pe da estante (mais longe)
+BOX 7   -200. -165. 198.     -100. -120. 200.          ! pe da estante
+BOX 7   -200. -135. 110.     -100. -133. 200.          ! prateleira
+BOX 9   -150. -118. 170.     -120.  -98. 200.          ! caixa
+BOX 0   -200. -100. 250.     -199.    0. 350.          ! moldura do quadro
+BOX 10  -199.  -95. 255      -198.5  -5. 345.          ! quadro

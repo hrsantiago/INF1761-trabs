@@ -1,0 +1,50 @@
+RT 5
+SCENE 0.1 0.1 0.12 0.2 0.2 0.2 null
+CAMERA 45 -450 70  30 -300 65  0 0 1  90 1 100 400 400
+MATERIAL green70   0.0 0.7 0   0 0 0  25  0  0  1  null
+MATERIAL yellow40  0.4 0.4 0   0 0 0  50  0  0  1  null
+MATERIAL red80     0.8 0 0     1 1 1  100  0.1  0  1  null
+MATERIAL red70     0.7 0 0     1 1 1  100  0.1  0  1  null
+MATERIAL gray80    0.8 0.8 0.8   1 1 1  100  0.1  0  1  null
+MATERIAL gray08    0.08 0.08 0.08   1 1 1  100  0.1  0  1  null
+MATERIAL blue90 0.0 0.0 0.9   1 1 1  100  0.1  0  1  null
+MATERIAL yellow90 0.9 0.9 0.0   1 1 1  100  0.1  0  1  null
+MATERIAL red70 0.0 0.7 0.0   1 1 1  100  0.1  0  1  null
+MATERIAL ciano90 0.9 0.3 0.9   1 1 1  100  0.1  0  1  null
+MATERIAL grey80 0.8 0.8 0.8   0 0 0  70  0  0  1  null
+MATERIAL grey10 0.1 0.1 0.1   0 0 0  15  0  0  1  null
+MATERIAL yellow30 0.3 0.2 0.0   0 0 0  15  0  0  1  null
+MATERIAL yellow60 0.6 0.5 0.0   0 0 0  15  0  0  1  marmore.jpg
+MATERIAL black 0.0 0.0 0.0   0 0 0  15  0  0  1  null
+MATERIAL grey80 0.8 0.8 0.8   0 0 0  15  0  0  1  null
+LIGHT 0 -450 600 0.8 0.8 0.8
+SPHERE grey80   20      50 -300 20
+SPHERE red70   20      0 0 20
+SPHERE gray08   20      -80 -90 20
+SPHERE blue90   20      -100 300 20
+SPHERE yellow90   20      200 200 20
+SPHERE red80   20      100 480 20
+SPHERE ciano90   20      -300 350 20
+BOX   green70    -400 -600 -20   400 600 0
+BOX   yellow40    -400 -580 -20   -380 580 20
+BOX   yellow40    380 -580 -20   400 580 20
+BOX   yellow40    -400 -600 -20   400 -580 20
+BOX   yellow40    -400 580 -20   400 600 20
+BOX   black    -800 600 -500   800 650 900
+BOX   grey80    0 590 130   800 600 430
+BOX   yellow30    -30 595 100   830 600 460
+BOX   yellow60    -312 579 500   -308 580 520
+BOX   black    -372 579 470   -368 580 490
+BOX   black    -492 579 500   -488 580 520
+BOX   yellow30    -540 560 90   -260 600 110
+BOX   yellow30    -540 560 430   -260 600 450
+TRIANGLE yellow60  -320 580 100   -300 580 100   -308 580 500    0 0   1 0   0 0
+TRIANGLE yellow60  -308 580 500   -312 580 500   -320 580 100    0 0   1 0   0 0
+TRIANGLE yellow60  -380 580 100   -360 580 100   -368 580 470    0 0   1 0   0 0
+TRIANGLE yellow60  -368 580 500   -372 580 470   -380 580 100    0 0   1 0   0 0
+TRIANGLE yellow60  -500 580 100   -480 580 100   -488 580 500    0 0   1 0   0 0
+TRIANGLE yellow60  -488 580 500   -492 580 500   -500 580 100    0 0   1 0   0 0
+TRIANGLE yellow60  200 585 180   400 585 250   395 585 250    0 0   1 0   0 0
+TRIANGLE yellow60  100 585 370   105 585 400   100 585 400    0 0   1 0   0 0
+TRIANGLE yellow60  130 585 370   135 585 400   130 585 400    0 0   1 0   0 0
+TRIANGLE yellow60  160 585 370   165 585 400   160 585 400    0 0   1 0   0 0

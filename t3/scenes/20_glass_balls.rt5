@@ -1,0 +1,27 @@
+RT 5
+SCENE 0 0 0.2 0.12 0.12 0.12 null
+CAMERA 120 50 40 0 30 0 0 1 0 90 1 100 400 400
+MATERIAL ball_glass 0.1 0.2 0.1   1 1 1  35  1  0.8  1.5  null
+MATERIAL table_glass 0.1 0.8 0.8   0 0 0  2000  0.6  0  1  null
+LIGHT 100 100 0 0.7 0.7 0.7
+SPHERE ball_glass    10        0 0 0
+SPHERE ball_glass    10      -17.3 0 -10
+SPHERE ball_glass    10      -17.3 0 10
+SPHERE ball_glass    10      -34.6 0 -20
+SPHERE ball_glass    10      -34.6 0 0
+SPHERE ball_glass    10      -34.6 0 20
+SPHERE ball_glass    10      -52 0 -10
+SPHERE ball_glass    10      -52 0 10
+SPHERE ball_glass    10      -52 0 -30
+SPHERE ball_glass    10      -52 0 30
+SPHERE ball_glass    10      -8.66 17.3 0
+SPHERE ball_glass    10      -26 17.3 -10
+SPHERE ball_glass    10      -26 17.3 10
+SPHERE ball_glass    10      -43.3 17.3 -20
+SPHERE ball_glass    10      -43.3 17.3 0
+SPHERE ball_glass    10      -43.3 17.3 20
+SPHERE ball_glass    10      -17.3 34.6 0
+SPHERE ball_glass    10      -34.6 34.6 10
+SPHERE ball_glass    10      -34.6 34.6 -10
+SPHERE ball_glass    10      -26 52 0
+BOX    table_glass  -500 -20 -500   500 -10 500
