@@ -59,6 +59,22 @@ struct Light
 
 struct Sphere
 {
+    bool intersect(const Vec3f& o, const Vec3f& d, float& t1, float& t2) const {
+        Vec3f oc = o - pos;
+        float a = d.dotProduct(d);
+        float b = (d * 2).dotProduct(oc);
+        float c = oc.dotProduct(oc) - r * r;
+
+        float delta = b * b - 4 * a * c;
+        if(delta < 0)
+            return false;
+
+        t1 = (-b - std::sqrt(delta)) / (2. * a);
+        t2 = (-b + std::sqrt(delta)) / (2. * a);
+        return true;
+    }
+
+
     std::string material;
     float r;
     Vec3f pos;

@@ -1,17 +1,62 @@
 #include "rt5.h"
 #include <cstdio>
 
+float PI = 3.14159265;
+float deg_to_rad = PI / 180;
+
 Image RT5::render()
 {
-    int w = m_camera.width;
-    int h = m_camera.height;
+    float w = m_camera.width;
+    float h = m_camera.height;
     Image image(w, h);
 
     renderBackground(image); // Maybe if not intersects any object, draw this pixel? Seems better
 
-    for(int i = 0; i < h; ++i) {
-        for(int j = 0; j < w; ++j) {
+    for(int y = 0; y < h; ++y) {
+        for(int x = 0; x < w; ++x) {
+            float a = 2 * m_camera.near * std::tan(m_camera.fov * deg_to_rad / 2.);
+            float b = (a * w) / h;
 
+            Vec3f ze = (m_camera.eye - m_camera.ref).normalized();
+            Vec3f xe = Vec3f::crossProduct(m_camera.up, ze).normalized();
+            Vec3f ye = Vec3f::crossProduct(ze, xe);
+
+            Vec3f o = m_camera.eye;
+            Vec3f d = xe * b * (x / w - 0.5) + ye * a *(y / h - 0.5) - ze * m_camera.near;
+
+            float t = m_camera.far;
+            Vec3f p;
+            Vec3f surfaceNormal;
+            Material material;
+
+            for(const Sphere& sphere : m_spheres) {
+                float t1, t2;
+                if(sphere.intersect(o, d, t1, t2)) {
+                    float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
+                    if(t0 < t) {
+                        t = t0;
+                        p = o + d * t0;
+                        surfaceNormal = (p - sphere.pos).normalized();
+                        material = m_materials[sphere.material];
+                    }
+                }
+            }
+
+            if(t < m_camera.far) {
+                Vec3f v = (m_camera.eye - p).normalized();
+                Vec3f Ia = Vec3f(m_scene.ambientLightColor.r, m_scene.ambientLightColor.g, m_scene.ambientLightColor.b);
+                Vec3f Ip = Ia;
+
+                for(const Light& light : m_lights) {
+                    Vec3f l = (light.pos - p).normalized();
+                    Vec3f r = surfaceNormal * (2 * l.dotProduct(surfaceNormal)) - l;
+                    Vec3f Is = Vec3f(material.ks.r, material.ks.g, material.ks.b) * std::pow(r.dotProduct(v), material.n);
+                    Vec3f Id = Vec3f(material.kd.r, material.kd.g, material.kd.b) * std::max<float>(l.dotProduct(surfaceNormal), 0);
+                    Ip += Is + Id;
+                }
+
+                image.pixel(x, y) = Pixel(Ip.getX(), Ip.getY(), Ip.getZ());
+            }
         }
     }
 

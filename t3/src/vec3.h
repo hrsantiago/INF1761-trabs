@@ -49,8 +49,8 @@ template <class T> class Vec3
             x = y = z = 0;
         }
 
-        // Method to normalise a vector
-        void normalise()
+        // Method to normalize a vector
+        void normalize()
         {
             // Calculate the magnitude of our vector
             T magnitude = sqrt((x * x) + (y * y) + (z * z));
@@ -63,6 +63,13 @@ template <class T> class Vec3
                 y /= magnitude;
                 z /= magnitude;
             }
+        }
+
+        Vec3 normalized()
+        {
+            Vec3 v = *this;
+            v.normalize();
+            return v;
         }
 
         // Static method to calculate and return the scalar dot product of two vectors
