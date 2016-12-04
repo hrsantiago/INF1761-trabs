@@ -180,6 +180,14 @@ struct Triangle
     Position2D tv3;
 };
 
+struct ObjectIntersection
+{
+    Vec3f p;
+    Vec3f n;
+    Material material;
+    bool valid = false;
+};
+
 class RT5
 {
 public:
@@ -187,6 +195,7 @@ public:
     bool load(const std::string& filename);
 
 private:
+    ObjectIntersection intersection(const Vec3f& o, const Vec3f& d);
     Pixel trace(const Vec3f& o, const Vec3f& d, int depth);
     Pixel shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth);
 

@@ -61,22 +61,21 @@ bool RT5::load(const std::string& filename)
     return true;
 }
 
-Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
+ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d)
 {
     float t = std::numeric_limits<float>::infinity();
-    Vec3f p;
-    Vec3f surfaceNormal;
-    Material material;
+    ObjectIntersection i;
 
     for(const Sphere& sphere : m_spheres) {
         float t1, t2;
         if(sphere.intersect(o, d, t1, t2)) {
             float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
-            if(t0 < t) {
+            if(t0 > 0 && t0 < t) {
                 t = t0;
-                p = o + d * t0;
-                surfaceNormal = sphere.normal(p);
-                material = m_materials[sphere.material];
+                i.p = o + d * t0;
+                i.n = sphere.normal(i.p);
+                i.material = m_materials[sphere.material];
+                i.valid = true;
             }
         }
     }
@@ -85,11 +84,12 @@ Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
         float t1, t2;
         if(box.intersect(o, d, t1, t2)) {
             float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
-            if(t0 < t) {
+            if(t0 > 0 && t0 < t) {
                 t = t0;
-                p = o + d * t0;
-                surfaceNormal = box.normal(p);
-                material = m_materials[box.material];
+                i.p = o + d * t0;
+                i.n = box.normal(i.p);
+                i.material = m_materials[box.material];
+                i.valid = true;
             }
         }
     }
@@ -97,19 +97,23 @@ Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
     for(const Triangle& triangle : m_triangles) {
         float t0;
         if(triangle.intersect(o, d, t0)) {
-            if(t0 < t) {
+            if(t0 > 0 && t0 < t) {
                 t = t0;
-                p = o + d * t0;
-                surfaceNormal = triangle.normal();
-                material = m_materials[triangle.material];
+                i.p = o + d * t0;
+                i.n = triangle.normal();
+                i.material = m_materials[triangle.material];
+                i.valid = true;
             }
         }
     }
+    return i;
+}
 
-    //float tze = (d * t).dotProduct(ze);
-    if(!std::isinf(t) /*&& tze >= m_camera.near && tze <= m_camera.far*/) {
-        return shade(o, d, surfaceNormal, p, material, depth);
-    }
+Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
+{
+    ObjectIntersection i = intersection(o, d);
+    if(i.valid)
+        return shade(o, d, i.n, i.p, i.material, depth);
     else
         return Pixel(m_scene.backgroundColor.r, m_scene.backgroundColor.g, m_scene.backgroundColor.b);
 }
@@ -121,21 +125,24 @@ Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p,
     Vec3f Ip = Ia;
 
     for(const Light& light : m_lights) {
-        Vec3f l = (light.pos - p).normalized();
-        Vec3f r = n * (2 * l.dotProduct(n)) - l;
-        Vec3f Is = Vec3f(material.ks.r, material.ks.g, material.ks.b) * std::pow(r.dotProduct(v), material.n);
-        Vec3f Id = Vec3f(material.kd.r, material.kd.g, material.kd.b) * std::max<float>(l.dotProduct(n), 0);
-        Ip += Is + Id;
+        ObjectIntersection i = intersection(p, light.pos - p);
+        if(!i.valid) {
+            Vec3f l = (light.pos - p).normalized();
+            Vec3f r = n * (2 * l.dotProduct(n)) - l;
+            Vec3f Is = Vec3f(material.ks.r, material.ks.g, material.ks.b) * std::pow(r.dotProduct(v), material.n);
+            Vec3f Id = Vec3f(material.kd.r, material.kd.g, material.kd.b) * std::max<float>(l.dotProduct(n), 0);
+            Ip += Is + Id;
+        }
     }
 
     Pixel src = Pixel(Ip.getX(), Ip.getY(), Ip.getZ());
-    if(depth > 5)
+    if(depth > 10)
         return src;
 
     if(material.k > 0) {
         Vec3f r = n * (2 * v.dotProduct(n)) - v;
         Pixel rColor = trace(p, r, depth + 1);
-        //src += rColor * material.k;
+        src += rColor * material.k;
     }
 
     if(material.opacity < 1) {
@@ -145,7 +152,7 @@ Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p,
         float cosTheta = std::sqrt(1 - sinTheta * sinTheta);
         Vec3f r = vt.normalized() * sinTheta - n * cosTheta;
         Pixel tColor = trace(p, r, depth + 1);
-        src += tColor * (1 - material.opacity);
+        //src += tColor * (1 - material.opacity);
         //if(src.v0() >= 1 || src.v1() >= 1 || src.v2() >= 1)
             //printf("vish");
     }
