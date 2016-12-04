@@ -82,6 +82,48 @@ struct Sphere
 
 struct Box
 {
+    bool intersect(const Vec3f& o, const Vec3f& d, float& t1, float& t2) const {
+        float tmin = (std::min<float>(bottomLeft.getX(), topRight.getX()) - o.getX()) / d.getX();
+        float tmax = (std::max<float>(bottomLeft.getX(), topRight.getX()) - o.getX()) / d.getX();
+
+        if(tmin > tmax)
+            std::swap(tmin, tmax);
+
+        float tymin = (std::min<float>(bottomLeft.getY(), topRight.getY()) - o.getY()) / d.getY();
+        float tymax = (std::max<float>(bottomLeft.getY(), topRight.getY()) - o.getY()) / d.getY();
+
+        if(tymin > tymax)
+            std::swap(tymin, tymax);
+
+        if((tmin > tymax) || (tymin > tmax))
+            return false;
+
+        if(tymin > tmin)
+            tmin = tymin;
+
+        if(tymax < tmax)
+            tmax = tymax;
+
+        float tzmin = (std::min<float>(bottomLeft.getZ(), topRight.getZ()) - o.getZ()) / d.getZ();
+        float tzmax = (std::max<float>(bottomLeft.getZ(), topRight.getZ()) - o.getZ()) / d.getZ();
+
+        if(tzmin > tzmax)
+            std::swap(tzmin, tzmax);
+
+        if((tmin > tzmax) || (tzmin > tmax))
+            return false;
+
+        if(tzmin > tmin)
+            tmin = tzmin;
+
+        if(tzmax < tmax)
+            tmax = tzmax;
+
+        t1 = tmin;
+        t2 = tmax;
+        return true;
+    }
+
     std::string material;
     Vec3f bottomLeft;
     Vec3f topRight;

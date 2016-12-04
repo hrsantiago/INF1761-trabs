@@ -1,5 +1,6 @@
 #include "rt5.h"
 #include <cstdio>
+#include <limits>
 
 float PI = 3.14159265;
 float deg_to_rad = PI / 180;
@@ -12,19 +13,19 @@ Image RT5::render()
 
     renderBackground(image); // Maybe if not intersects any object, draw this pixel? Seems better
 
+    float a = 2 * m_camera.near * std::tan(m_camera.fov * deg_to_rad / 2.);
+    float b = (a * w) / h;
+
+    Vec3f ze = (m_camera.eye - m_camera.ref).normalized();
+    Vec3f xe = Vec3f::crossProduct(m_camera.up, ze).normalized();
+    Vec3f ye = Vec3f::crossProduct(ze, xe);
+
     for(int y = 0; y < h; ++y) {
         for(int x = 0; x < w; ++x) {
-            float a = 2 * m_camera.near * std::tan(m_camera.fov * deg_to_rad / 2.);
-            float b = (a * w) / h;
-
-            Vec3f ze = (m_camera.eye - m_camera.ref).normalized();
-            Vec3f xe = Vec3f::crossProduct(m_camera.up, ze).normalized();
-            Vec3f ye = Vec3f::crossProduct(ze, xe);
-
             Vec3f o = m_camera.eye;
             Vec3f d = xe * b * (x / w - 0.5) + ye * a *(y / h - 0.5) - ze * m_camera.near;
 
-            float t = m_camera.far;
+            float t = std::numeric_limits<float>::infinity();
             Vec3f p;
             Vec3f surfaceNormal;
             Material material;
@@ -42,7 +43,20 @@ Image RT5::render()
                 }
             }
 
-            if(t < m_camera.far) {
+            for(const Box& box : m_boxes) {
+                float t1, t2;
+                if(box.intersect(o, d, t1, t2)) {
+                    float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
+                    if(t0 < t) {
+                        t = t0;
+                        p = o + d * t0;
+                        surfaceNormal = (p - (box.bottomLeft + box.topRight) / 2.).normalized();
+                        material = m_materials[box.material];
+                    }
+                }
+            }
+
+            if((d * t).dotProduct(ze) < m_camera.far) {
                 Vec3f v = (m_camera.eye - p).normalized();
                 Vec3f Ia = Vec3f(m_scene.ambientLightColor.r, m_scene.ambientLightColor.g, m_scene.ambientLightColor.b);
                 Vec3f Ip = Ia;
@@ -56,6 +70,9 @@ Image RT5::render()
                 }
 
                 image.pixel(x, y) = Pixel(Ip.getX(), Ip.getY(), Ip.getZ());
+            }
+            else {
+                // draw background?
             }
         }
     }
