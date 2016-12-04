@@ -7,13 +7,6 @@
 #include "image.h"
 #include "vec3.h"
 
-struct RGB
-{
-    float r;
-    float g;
-    float b;
-};
-
 struct Position2D
 {
     float x;
@@ -22,8 +15,8 @@ struct Position2D
 
 struct Scene
 {
-    RGB backgroundColor;
-    RGB ambientLightColor;
+    Vec3f backgroundColor;
+    Vec3f ambientLightColor;
     std::string texture;
 };
 
@@ -42,8 +35,8 @@ struct Camera
 struct Material
 {
     std::string name;
-    RGB kd;
-    RGB ks;
+    Vec3f kd;
+    Vec3f ks;
     int n; // specular
     float k; // reflection coef
     float refraction;
@@ -54,7 +47,7 @@ struct Material
 struct Light
 {
     Vec3f pos;
-    RGB intensity;
+    Vec3f intensity;
 };
 
 struct Sphere
@@ -195,13 +188,12 @@ public:
     bool load(const std::string& filename);
 
 private:
-    ObjectIntersection intersection(const Vec3f& o, const Vec3f& d);
+    ObjectIntersection intersection(const Vec3f& o, const Vec3f& d, float minOpacity = 0);
     Pixel trace(const Vec3f& o, const Vec3f& d, int depth);
     Pixel shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth);
 
     std::string parseString(FILE *fp);
-    RGB parseRGB(FILE *fp);
-    Vec3f parsePosition(FILE *fp);
+    Vec3f parseVec3f(FILE *fp);
     Position2D parsePosition2D(FILE *fp);
     Scene parseScene(FILE *fp);
     Camera parseCamera(FILE *fp);

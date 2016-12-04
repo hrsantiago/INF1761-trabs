@@ -15,6 +15,7 @@ public:
     void saveBMP(const std::string& filename);
 
     void fill(const Pixel& p);
+    void normalize();
 
     Pixel& pixel(int x, int y) { return m_pixels[y * m_width + x]; }
 

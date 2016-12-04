@@ -40,7 +40,7 @@ void Image::saveBMP(const std::string& filename)
 
     ImageLoader l;
     l.writeBMP(rgb, m_width, m_height, filename.c_str());
-    delete rgb;
+    delete []rgb;
 }
 
 void Image::fill(const Pixel& p)
@@ -48,6 +48,15 @@ void Image::fill(const Pixel& p)
     for(int i = 0; i < m_height; i++)
         for(int j = 0; j < m_width; j++)
             pixel(j, i) = p;
+}
+
+void Image::normalize()
+{
+    float maxI = 0;
+    for(const Pixel& pixel : m_pixels)
+        maxI = std::max(maxI, std::max(pixel.v0(), std::max(pixel.v1(), pixel.v2())));
+    for(Pixel& pixel : m_pixels)
+        pixel.setV(pixel.v0() / maxI, pixel.v1() / maxI, pixel.v2() / maxI);
 }
 
 void Image::rgbToLab()

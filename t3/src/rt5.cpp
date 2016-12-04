@@ -1,6 +1,7 @@
 #include "rt5.h"
 #include <cstdio>
 #include <limits>
+#include <cstring>
 
 float PI = 3.14159265;
 float deg_to_rad = PI / 180;
@@ -26,6 +27,7 @@ Image RT5::render()
         }
     }
 
+    //image.normalize();
     return image;
 }
 
@@ -61,7 +63,7 @@ bool RT5::load(const std::string& filename)
     return true;
 }
 
-ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d)
+ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d, float minOpacity)
 {
     float t = std::numeric_limits<float>::infinity();
     ObjectIntersection i;
@@ -69,12 +71,21 @@ ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d)
     for(const Sphere& sphere : m_spheres) {
         float t1, t2;
         if(sphere.intersect(o, d, t1, t2)) {
-            float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
-            if(t0 > 0 && t0 < t) {
-                t = t0;
-                i.p = o + d * t0;
+            if(t1 > t2)
+                std::swap(t1, t2);
+
+            if(t1 < 1E-03) {
+                t1 = t2;
+                if(t1 < 1E-03)
+                    continue;
+            }
+
+            Material material = m_materials[sphere.material];
+            if(t1 < t && material.opacity >= minOpacity) {
+                t = t1;
+                i.p = o + d * t1;
                 i.n = sphere.normal(i.p);
-                i.material = m_materials[sphere.material];
+                i.material = material;
                 i.valid = true;
             }
         }
@@ -83,12 +94,21 @@ ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d)
     for(const Box& box : m_boxes) {
         float t1, t2;
         if(box.intersect(o, d, t1, t2)) {
-            float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
-            if(t0 > 0 && t0 < t) {
-                t = t0;
-                i.p = o + d * t0;
+            if(t1 > t2)
+                std::swap(t1, t2);
+
+            if(t1 < 1E-03) {
+                t1 = t2;
+                if(t1 < 1E-03)
+                    continue;
+            }
+
+            Material material = m_materials[box.material];
+            if(t1 < t && material.opacity >= minOpacity) {
+                t = t1;
+                i.p = o + d * t1;
                 i.n = box.normal(i.p);
-                i.material = m_materials[box.material];
+                i.material = material;
                 i.valid = true;
             }
         }
@@ -97,11 +117,12 @@ ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d)
     for(const Triangle& triangle : m_triangles) {
         float t0;
         if(triangle.intersect(o, d, t0)) {
-            if(t0 > 0 && t0 < t) {
+            Material material = m_materials[triangle.material];
+            if(t0 > 1E-03 && t0 < t && material.opacity >= minOpacity) {
                 t = t0;
                 i.p = o + d * t0;
                 i.n = triangle.normal();
-                i.material = m_materials[triangle.material];
+                i.material = material;
                 i.valid = true;
             }
         }
@@ -115,22 +136,23 @@ Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
     if(i.valid)
         return shade(o, d, i.n, i.p, i.material, depth);
     else
-        return Pixel(m_scene.backgroundColor.r, m_scene.backgroundColor.g, m_scene.backgroundColor.b);
+        return Pixel(m_scene.backgroundColor.getX(), m_scene.backgroundColor.getY(), m_scene.backgroundColor.getZ());
 }
 
 Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth)
 {
     Vec3f v = (o - p).normalized();
-    Vec3f Ia = Vec3f(m_scene.ambientLightColor.r, m_scene.ambientLightColor.g, m_scene.ambientLightColor.b);
+    Vec3f Ia = m_scene.ambientLightColor * material.kd;
     Vec3f Ip = Ia;
 
+    Vec3f rr = n * (2 * v.dotProduct(n)) - v;
     for(const Light& light : m_lights) {
-        ObjectIntersection i = intersection(p, light.pos - p);
+        ObjectIntersection i = intersection(p, light.pos - p, 1);
         if(!i.valid) {
             Vec3f l = (light.pos - p).normalized();
-            Vec3f r = n * (2 * l.dotProduct(n)) - l;
-            Vec3f Is = Vec3f(material.ks.r, material.ks.g, material.ks.b) * std::pow(r.dotProduct(v), material.n);
-            Vec3f Id = Vec3f(material.kd.r, material.kd.g, material.kd.b) * std::max<float>(l.dotProduct(n), 0);
+            Vec3f Is = light.intensity * material.ks * std::pow(rr.dotProduct(l), material.n);
+            Vec3f Id = light.intensity * material.kd * std::max<float>(n.dotProduct(l), 0);
+
             Ip += Is + Id;
         }
     }
@@ -152,33 +174,21 @@ Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p,
         float cosTheta = std::sqrt(1 - sinTheta * sinTheta);
         Vec3f r = vt.normalized() * sinTheta - n * cosTheta;
         Pixel tColor = trace(p, r, depth + 1);
-        //src += tColor * (1 - material.opacity);
-        //if(src.v0() >= 1 || src.v1() >= 1 || src.v2() >= 1)
-            //printf("vish");
+        src += tColor * (1 - material.opacity);
     }
 
     return src;
-    //Pixel dest = image.pixel(x, y);
-    //return (src * material.opacity) + (dest * (1 - material.opacity));
 }
 
 std::string RT5::parseString(FILE *fp)
 {
     char str[80];
+    memset(str, 0, 80);
     fscanf(fp, "%s", str);
     return std::string(str);
 }
 
-RGB RT5::parseRGB(FILE *fp)
-{
-    RGB rgb;
-    fscanf(fp, "%f", &rgb.r);
-    fscanf(fp, "%f", &rgb.g);
-    fscanf(fp, "%f", &rgb.b);
-    return rgb;
-}
-
-Vec3f RT5::parsePosition(FILE *fp)
+Vec3f RT5::parseVec3f(FILE *fp)
 {
     float x, y, z;
     fscanf(fp, "%f", &x);
@@ -198,8 +208,8 @@ Position2D RT5::parsePosition2D(FILE *fp)
 Scene RT5::parseScene(FILE *fp)
 {
     Scene scene;
-    scene.backgroundColor = parseRGB(fp);
-    scene.ambientLightColor = parseRGB(fp);
+    scene.backgroundColor = parseVec3f(fp);
+    scene.ambientLightColor = parseVec3f(fp);
     scene.texture = parseString(fp);
     if(scene.texture == "null")
         scene.texture = "";
@@ -209,9 +219,9 @@ Scene RT5::parseScene(FILE *fp)
 Camera RT5::parseCamera(FILE *fp)
 {
     Camera camera;
-    camera.eye = parsePosition(fp);
-    camera.ref = parsePosition(fp);
-    camera.up = parsePosition(fp);
+    camera.eye = parseVec3f(fp);
+    camera.ref = parseVec3f(fp);
+    camera.up = parseVec3f(fp);
     fscanf(fp, "%f", &camera.fov);
     fscanf(fp, "%f", &camera.near);
     fscanf(fp, "%f", &camera.far);
@@ -224,8 +234,8 @@ Material RT5::parseMaterial(FILE *fp)
 {
     Material material;
     material.name = parseString(fp);
-    material.kd = parseRGB(fp);
-    material.ks = parseRGB(fp);
+    material.kd = parseVec3f(fp);
+    material.ks = parseVec3f(fp);
     fscanf(fp, "%d", &material.n);
     fscanf(fp, "%f", &material.k);
     fscanf(fp, "%f", &material.refraction);
@@ -239,8 +249,8 @@ Material RT5::parseMaterial(FILE *fp)
 Light RT5::parseLight(FILE *fp)
 {
     Light light;
-    light.pos = parsePosition(fp);
-    light.intensity = parseRGB(fp);
+    light.pos = parseVec3f(fp);
+    light.intensity = parseVec3f(fp);
     return light;
 }
 
@@ -249,7 +259,7 @@ Sphere RT5::parseSphere(FILE *fp)
     Sphere sphere;
     sphere.material = parseString(fp);
     fscanf(fp, "%f", &sphere.r);
-    sphere.pos = parsePosition(fp);
+    sphere.pos = parseVec3f(fp);
     return sphere;
 }
 
@@ -257,8 +267,8 @@ Box RT5::parseBox(FILE *fp)
 {
     Box box;
     box.material = parseString(fp);
-    box.bottomLeft = parsePosition(fp);
-    box.topRight = parsePosition(fp);
+    box.bottomLeft = parseVec3f(fp);
+    box.topRight = parseVec3f(fp);
     return box;
 }
 
@@ -266,9 +276,9 @@ Triangle RT5::parseTriangle(FILE *fp)
 {
     Triangle triangle;
     triangle.material = parseString(fp);
-    triangle.v1 = parsePosition(fp);
-    triangle.v2 = parsePosition(fp);
-    triangle.v3 = parsePosition(fp);
+    triangle.v1 = parseVec3f(fp);
+    triangle.v2 = parseVec3f(fp);
+    triangle.v3 = parseVec3f(fp);
     triangle.tv1 = parsePosition2D(fp);
     triangle.tv2 = parsePosition2D(fp);
     triangle.tv3 = parsePosition2D(fp);
