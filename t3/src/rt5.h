@@ -187,7 +187,8 @@ public:
     bool load(const std::string& filename);
 
 private:
-    void renderBackground(Image& image);
+    Pixel trace(const Vec3f& o, const Vec3f& d, int depth);
+    Pixel shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth);
 
     std::string parseString(FILE *fp);
     RGB parseRGB(FILE *fp);

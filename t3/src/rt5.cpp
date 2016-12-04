@@ -11,8 +11,6 @@ Image RT5::render()
     float h = m_camera.height;
     Image image(w, h);
 
-    renderBackground(image); // Maybe if not intersects any object, draw this pixel? Seems better
-
     float a = 2 * m_camera.near * std::tan(m_camera.fov * deg_to_rad / 2.);
     float b = (a * w) / h;
 
@@ -24,75 +22,9 @@ Image RT5::render()
         for(int x = 0; x < w; ++x) {
             Vec3f o = m_camera.eye;
             Vec3f d = xe * b * (x / w - 0.5) + ye * a *(y / h - 0.5) - ze * m_camera.near;
-
-            float t = std::numeric_limits<float>::infinity();
-            Vec3f p;
-            Vec3f surfaceNormal;
-            Material material;
-
-            for(const Sphere& sphere : m_spheres) {
-                float t1, t2;
-                if(sphere.intersect(o, d, t1, t2)) {
-                    float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
-                    if(t0 < t) {
-                        t = t0;
-                        p = o + d * t0;
-                        surfaceNormal = sphere.normal(p);
-                        material = m_materials[sphere.material];
-                    }
-                }
-            }
-
-            for(const Box& box : m_boxes) {
-                float t1, t2;
-                if(box.intersect(o, d, t1, t2)) {
-                    float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
-                    if(t0 < t) {
-                        t = t0;
-                        p = o + d * t0;
-                        surfaceNormal = box.normal(p);
-                        material = m_materials[box.material];
-                    }
-                }
-            }
-
-            for(const Triangle& triangle : m_triangles) {
-                float t0;
-                if(triangle.intersect(o, d, t0)) {
-                    if(t0 < t) {
-                        t = t0;
-                        p = o + d * t0;
-                        surfaceNormal = triangle.normal();
-                        material = m_materials[triangle.material];
-                    }
-                }
-            }
-
-            //float tze = (d * t).dotProduct(ze);
-            if(!std::isinf(t) /*&& tze >= m_camera.near && tze <= m_camera.far*/) {
-                //printf("%.2f\n", t);
-                Vec3f v = (m_camera.eye - p).normalized();
-                Vec3f Ia = Vec3f(m_scene.ambientLightColor.r, m_scene.ambientLightColor.g, m_scene.ambientLightColor.b);
-                Vec3f Ip = Ia;
-
-                for(const Light& light : m_lights) {
-                    Vec3f l = (light.pos - p).normalized();
-                    Vec3f r = surfaceNormal * (2 * l.dotProduct(surfaceNormal)) - l;
-                    Vec3f Is = Vec3f(material.ks.r, material.ks.g, material.ks.b) * std::pow(r.dotProduct(v), material.n);
-                    Vec3f Id = Vec3f(material.kd.r, material.kd.g, material.kd.b) * std::max<float>(l.dotProduct(surfaceNormal), 0);
-                    Ip += Is + Id;
-                }
-
-                Pixel src = Pixel(Ip.getX(), Ip.getY(), Ip.getZ());
-                Pixel dest = image.pixel(x, y);
-                image.pixel(x, y) = (src * material.opacity) + (dest * (1 - material.opacity));
-            }
-            else {
-                // draw background?
-            }
+            image.pixel(x, y) = trace(o, d, 1);
         }
     }
-
 
     return image;
 }
@@ -129,12 +61,98 @@ bool RT5::load(const std::string& filename)
     return true;
 }
 
-void RT5::renderBackground(Image& image)
+Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
 {
-    Pixel backgroundPixel(m_scene.backgroundColor.r, m_scene.backgroundColor.g, m_scene.backgroundColor.b);
-    image.fill(backgroundPixel);
+    float t = std::numeric_limits<float>::infinity();
+    Vec3f p;
+    Vec3f surfaceNormal;
+    Material material;
 
-    // TODO render bg texture
+    for(const Sphere& sphere : m_spheres) {
+        float t1, t2;
+        if(sphere.intersect(o, d, t1, t2)) {
+            float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
+            if(t0 < t) {
+                t = t0;
+                p = o + d * t0;
+                surfaceNormal = sphere.normal(p);
+                material = m_materials[sphere.material];
+            }
+        }
+    }
+
+    for(const Box& box : m_boxes) {
+        float t1, t2;
+        if(box.intersect(o, d, t1, t2)) {
+            float t0 = std::min(t1, t2); // must ensure they are above 0 or above near? donno
+            if(t0 < t) {
+                t = t0;
+                p = o + d * t0;
+                surfaceNormal = box.normal(p);
+                material = m_materials[box.material];
+            }
+        }
+    }
+
+    for(const Triangle& triangle : m_triangles) {
+        float t0;
+        if(triangle.intersect(o, d, t0)) {
+            if(t0 < t) {
+                t = t0;
+                p = o + d * t0;
+                surfaceNormal = triangle.normal();
+                material = m_materials[triangle.material];
+            }
+        }
+    }
+
+    //float tze = (d * t).dotProduct(ze);
+    if(!std::isinf(t) /*&& tze >= m_camera.near && tze <= m_camera.far*/) {
+        return shade(o, d, surfaceNormal, p, material, depth);
+    }
+    else
+        return Pixel(m_scene.backgroundColor.r, m_scene.backgroundColor.g, m_scene.backgroundColor.b);
+}
+
+Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth)
+{
+    Vec3f v = (o - p).normalized();
+    Vec3f Ia = Vec3f(m_scene.ambientLightColor.r, m_scene.ambientLightColor.g, m_scene.ambientLightColor.b);
+    Vec3f Ip = Ia;
+
+    for(const Light& light : m_lights) {
+        Vec3f l = (light.pos - p).normalized();
+        Vec3f r = n * (2 * l.dotProduct(n)) - l;
+        Vec3f Is = Vec3f(material.ks.r, material.ks.g, material.ks.b) * std::pow(r.dotProduct(v), material.n);
+        Vec3f Id = Vec3f(material.kd.r, material.kd.g, material.kd.b) * std::max<float>(l.dotProduct(n), 0);
+        Ip += Is + Id;
+    }
+
+    Pixel src = Pixel(Ip.getX(), Ip.getY(), Ip.getZ());
+    if(depth > 5)
+        return src;
+
+    if(material.k > 0) {
+        Vec3f r = n * (2 * v.dotProduct(n)) - v;
+        Pixel rColor = trace(p, r, depth + 1);
+        //src += rColor * material.k;
+    }
+
+    if(material.opacity < 1) {
+        Vec3f vt = (n * v.dotProduct(n)) - v;
+        float sinThetaI = std::sqrt(vt.dotProduct(vt));
+        float sinTheta = sinThetaI / material.refraction;
+        float cosTheta = std::sqrt(1 - sinTheta * sinTheta);
+        Vec3f r = vt.normalized() * sinTheta - n * cosTheta;
+        Pixel tColor = trace(p, r, depth + 1);
+        src += tColor * (1 - material.opacity);
+        //if(src.v0() >= 1 || src.v1() >= 1 || src.v2() >= 1)
+            //printf("vish");
+    }
+
+    return src;
+    //Pixel dest = image.pixel(x, y);
+    //return (src * material.opacity) + (dest * (1 - material.opacity));
 }
 
 std::string RT5::parseString(FILE *fp)
