@@ -74,6 +74,9 @@ struct Sphere
         return true;
     }
 
+    Vec3f normal(const Vec3f& p) const {
+        return (p - pos).normalized();
+    }
 
     std::string material;
     float r;
@@ -124,6 +127,23 @@ struct Box
         return true;
     }
 
+    Vec3f normal(const Vec3f& p) const {
+        float EPS = 1E-03;
+        if(std::abs(p.getX() - std::min(bottomLeft.getX(), topRight.getX())) < EPS)
+            return Vec3f(-1,0,0);
+        else if(std::abs(p.getX() - std::max(bottomLeft.getX(), topRight.getX())) < EPS)
+            return Vec3f(1,0,0);
+        else if(std::abs(p.getY() - std::min(bottomLeft.getY(), topRight.getY())) < EPS)
+            return Vec3f(0,-1,0);
+        else if(std::abs(p.getY() - std::max(bottomLeft.getY(), topRight.getY())) < EPS)
+            return Vec3f(0,1,0);
+        else if(std::abs(p.getZ() - std::min(bottomLeft.getZ(), topRight.getZ())) < EPS)
+            return Vec3f(0,0,-1);
+        else if(std::abs(p.getZ() - std::max(bottomLeft.getZ(), topRight.getZ())) < EPS)
+            return Vec3f(0,0,1);
+        return Vec3f();
+    }
+
     std::string material;
     Vec3f bottomLeft;
     Vec3f topRight;
@@ -131,6 +151,26 @@ struct Box
 
 struct Triangle
 {
+    bool intersect(const Vec3f& o, const Vec3f& d, float& t) const {
+        Vec3f n = normal();
+        float proj = d.dotProduct(n);
+        t = (v1 - o).dotProduct(n) / proj;
+
+        Vec3f pi = o + d * t;
+        float a1 = n.dotProduct(Vec3f::crossProduct(v3 - v2, pi - v2)) / 2.;
+        float a2 = n.dotProduct(Vec3f::crossProduct(v1 - v3, pi - v3)) / 2.;
+        float a3 = n.dotProduct(Vec3f::crossProduct(v2 - v1, pi - v1)) / 2.;
+        float a = a1 + a2 + a3;
+
+        float l1 = a1 / a;
+        float l2 = a2 / a;
+        float l3 = a3 / a;
+        return l1 >= 0 && l2 >= 0 && l3 >= 0 && l1 <= 1 && l2 <= 1 && l3 <= 1;
+    }
+    Vec3f normal() const {
+        return Vec3f::crossProduct(v2 - v1, v3 - v2).normalized();
+    }
+
     std::string material;
     Vec3f v1;
     Vec3f v2;

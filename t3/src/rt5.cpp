@@ -37,7 +37,7 @@ Image RT5::render()
                     if(t0 < t) {
                         t = t0;
                         p = o + d * t0;
-                        surfaceNormal = (p - sphere.pos).normalized();
+                        surfaceNormal = sphere.normal(p);
                         material = m_materials[sphere.material];
                     }
                 }
@@ -50,13 +50,27 @@ Image RT5::render()
                     if(t0 < t) {
                         t = t0;
                         p = o + d * t0;
-                        surfaceNormal = (p - (box.bottomLeft + box.topRight) / 2.).normalized();
+                        surfaceNormal = box.normal(p);
                         material = m_materials[box.material];
                     }
                 }
             }
 
-            if((d * t).dotProduct(ze) < m_camera.far) {
+            for(const Triangle& triangle : m_triangles) {
+                float t0;
+                if(triangle.intersect(o, d, t0)) {
+                    if(t0 < t) {
+                        t = t0;
+                        p = o + d * t0;
+                        surfaceNormal = triangle.normal();
+                        material = m_materials[triangle.material];
+                    }
+                }
+            }
+
+            //float tze = (d * t).dotProduct(ze);
+            if(!std::isinf(t) /*&& tze >= m_camera.near && tze <= m_camera.far*/) {
+                //printf("%.2f\n", t);
                 Vec3f v = (m_camera.eye - p).normalized();
                 Vec3f Ia = Vec3f(m_scene.ambientLightColor.r, m_scene.ambientLightColor.g, m_scene.ambientLightColor.b);
                 Vec3f Ip = Ia;
@@ -69,7 +83,9 @@ Image RT5::render()
                     Ip += Is + Id;
                 }
 
-                image.pixel(x, y) = Pixel(Ip.getX(), Ip.getY(), Ip.getZ());
+                Pixel src = Pixel(Ip.getX(), Ip.getY(), Ip.getZ());
+                Pixel dest = image.pixel(x, y);
+                image.pixel(x, y) = (src * material.opacity) + (dest * (1 - material.opacity));
             }
             else {
                 // draw background?
