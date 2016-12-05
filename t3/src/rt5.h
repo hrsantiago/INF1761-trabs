@@ -188,6 +188,7 @@ public:
     bool load(const std::string& filename);
 
 private:
+    void loadTexture(const std::string& name);
     ObjectIntersection intersection(const Vec3f& o, const Vec3f& d, float minOpacity = 0);
     Pixel trace(const Vec3f& o, const Vec3f& d, int depth);
     Pixel shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth);
@@ -210,6 +211,7 @@ private:
     std::vector<Sphere> m_spheres;
     std::vector<Box> m_boxes;
     std::vector<Triangle> m_triangles;
+    std::map<std::string, Image> m_textures;
 };
 
 #endif

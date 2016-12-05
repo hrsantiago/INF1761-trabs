@@ -14,7 +14,7 @@ MATERIAL ciano90 0.9 0.3 0.9   1 1 1  100  0.1  0  1  null
 MATERIAL grey80 0.8 0.8 0.8   0 0 0  70  0  0  1  null
 MATERIAL grey10 0.1 0.1 0.1   0 0 0  15  0  0  1  null
 MATERIAL yellow30 0.3 0.2 0.0   0 0 0  15  0  0  1  null
-MATERIAL yellow60 0.6 0.5 0.0   0 0 0  15  0  0  1  marmore.jpg
+MATERIAL yellow60 0.6 0.5 0.0   0 0 0  15  0  0  1  marmore.bmp
 MATERIAL black 0.0 0.0 0.0   0 0 0  15  0  0  1  null
 MATERIAL grey80 0.8 0.8 0.8   0 0 0  15  0  0  1  null
 LIGHT 0 -450 600 0.8 0.8 0.8

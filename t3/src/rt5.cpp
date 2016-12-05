@@ -59,8 +59,23 @@ bool RT5::load(const std::string& filename)
             m_triangles.push_back(parseTriangle(fp));
     }
 
+    loadTexture(m_scene.texture);
+    for(auto& pair : m_materials)
+        loadTexture(pair.second.texture);
+
+
     fclose(fp);
     return true;
+}
+
+void RT5::loadTexture(const std::string& name)
+{
+    if(name.empty())
+        return;
+
+    Image image;
+    image.loadBMP("textures/" + name);
+    m_textures[name] = image;
 }
 
 ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d, float minOpacity)

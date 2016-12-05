@@ -1,5 +1,5 @@
 RT 5
-SCENE 0.4 0.4 0.4 0.3 0.3 0.5  wood.jpg
+SCENE 0.4 0.4 0.4 0.3 0.3 0.5  wood.bmp
 CAMERA 100 40 40 0 0 0 0 1 0 90 30 230 400 400
 MATERIAL blue 0 0 1   1 1 1  50  0.5  1.05  0.1  null
 MATERIAL yellow 0.7 0.7 0   1 1 1  40  0  0  1  null

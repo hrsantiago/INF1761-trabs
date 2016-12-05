@@ -1,5 +1,5 @@
 RT 5
-SCENE 0.1 0.1 0.1  0.01 0.01 0 sky.jpg
+SCENE 0.1 0.1 0.1  0.01 0.01 0 sky.bmp
 CAMERA 0 0 150 0 0 0 0 1 0 90 1 100 400 400
 MATERIAL yellow 1 1 0   0.8 0.8 0.8  65  0.9  0  1  null
 MATERIAL black 0 0 0   1 1 1  45  0.9  0  1  null
