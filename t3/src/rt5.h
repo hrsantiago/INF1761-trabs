@@ -178,6 +178,8 @@ struct ObjectIntersection
     Vec3f p;
     Vec3f n;
     Material material;
+    float u = 0;
+    float v = 0;
     bool valid = false;
 };
 
@@ -191,7 +193,7 @@ private:
     void loadTexture(const std::string& name);
     ObjectIntersection intersection(const Vec3f& o, const Vec3f& d, float minOpacity = 0);
     Pixel trace(const Vec3f& o, const Vec3f& d, int depth);
-    Pixel shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth);
+    Pixel shade(const Vec3f& o, const Vec3f& d, const ObjectIntersection &obj, int depth);
 
     std::string parseString(FILE *fp);
     Vec3f parseVec3f(FILE *fp);

@@ -63,7 +63,6 @@ bool RT5::load(const std::string& filename)
     for(auto& pair : m_materials)
         loadTexture(pair.second.texture);
 
-
     fclose(fp);
     return true;
 }
@@ -102,6 +101,11 @@ ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d, float minOp
                 i.n = sphere.normal(i.p);
                 i.material = material;
                 i.valid = true;
+
+                float phi = std::atan2(i.n.getY(), i.n.getX());
+                float theta = std::atan2(std::hypot(i.n.getX(), i.n.getY()), i.n.getZ());
+                i.u = (1 + phi / PI) / 2.;
+                i.v = theta / PI;
             }
         }
     }
@@ -125,6 +129,26 @@ ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d, float minOp
                 i.n = box.normal(i.p);
                 i.material = material;
                 i.valid = true;
+
+                float minX = std::min(box.bottomLeft.getX(), box.topRight.getX());
+                float maxX = std::max(box.bottomLeft.getX(), box.topRight.getX());
+                float minY = std::min(box.bottomLeft.getY(), box.topRight.getY());
+                float maxY = std::max(box.bottomLeft.getY(), box.topRight.getY());
+                float minZ = std::min(box.bottomLeft.getZ(), box.topRight.getZ());
+                float maxZ = std::max(box.bottomLeft.getZ(), box.topRight.getZ());
+
+                if(i.n.getX() != 0) {
+                    i.u = (i.p.getY() - minY) / (maxY - minY);
+                    i.v = (i.p.getZ() - minZ) / (maxZ - minZ);
+                }
+                else if(i.n.getY() != 0) {
+                    i.u = (i.p.getZ() - minZ) / (maxZ - minZ);
+                    i.v = (i.p.getX() - minX) / (maxX - minX);
+                }
+                else if(i.n.getZ() != 0) {
+                    i.u = (i.p.getX() - minX) / (maxX - minX);
+                    i.v = (i.p.getY() - minY) / (maxY - minY);
+                }
             }
         }
     }
@@ -139,6 +163,18 @@ ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d, float minOp
                 i.n = triangle.normal();
                 i.material = material;
                 i.valid = true;
+
+                float a1 = i.n.dotProduct(Vec3f::crossProduct(triangle.v3 - triangle.v2, i.p - triangle.v2)) / 2.;
+                float a2 = i.n.dotProduct(Vec3f::crossProduct(triangle.v1 - triangle.v3, i.p - triangle.v3)) / 2.;
+                float a3 = i.n.dotProduct(Vec3f::crossProduct(triangle.v2 - triangle.v1, i.p - triangle.v1)) / 2.;
+                float a = a1 + a2 + a3;
+
+                float l1 = a1 / a;
+                float l2 = a2 / a;
+                float l3 = a3 / a;
+
+                i.u = l1 * triangle.tv1.x + l2 * triangle.tv2.x + l3 * triangle.tv3.x;
+                i.v = l1 * triangle.tv1.y + l2 * triangle.tv2.y + l3 * triangle.tv3.y;
             }
         }
     }
@@ -149,25 +185,34 @@ Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
 {
     ObjectIntersection i = intersection(o, d);
     if(i.valid)
-        return shade(o, d, i.n, i.p, i.material, depth);
+        return shade(o, d, i, depth);
     else
         return Pixel(m_scene.backgroundColor.getX(), m_scene.backgroundColor.getY(), m_scene.backgroundColor.getZ());
 }
 
-Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p, const Material& material, int depth)
+Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const ObjectIntersection& obj, int depth)
 {
-    Vec3f v = (o - p).normalized();
-    Vec3f Ia = m_scene.ambientLightColor * material.kd;
+    Vec3f kd = obj.material.kd;
+
+    if(!obj.material.texture.empty()) {
+        Image& image = m_textures[obj.material.texture];
+        float x = std::round(obj.u * image.width());
+        float y = std::round(obj.v * image.height());
+        Pixel pixel = image.pixel(x, y);
+        kd = Vec3f(pixel.v0(), pixel.v1(), pixel.v2());
+    }
+
+    Vec3f v = (o - obj.p).normalized();
+    Vec3f Ia = m_scene.ambientLightColor * kd;
     Vec3f Ip = Ia;
 
-    Vec3f rr = n * (2 * v.dotProduct(n)) - v;
+    Vec3f rr = obj.n * (2 * v.dotProduct(obj.n)) - v;
     for(const Light& light : m_lights) {
-        ObjectIntersection i = intersection(p, light.pos - p, 1);
+        ObjectIntersection i = intersection(obj.p, light.pos - obj.p, 1);
         if(!i.valid) {
-            Vec3f l = (light.pos - p).normalized();
-            Vec3f Is = light.intensity * material.ks * std::pow(rr.dotProduct(l), material.n);
-            Vec3f Id = light.intensity * material.kd * std::max<float>(n.dotProduct(l), 0);
-
+            Vec3f l = (light.pos - obj.p).normalized();
+            Vec3f Is = light.intensity * obj.material.ks * std::pow(rr.dotProduct(l), obj.material.n);
+            Vec3f Id = light.intensity * kd * std::max<float>(obj.n.dotProduct(l), 0);
             Ip += Is + Id;
         }
     }
@@ -176,20 +221,20 @@ Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const Vec3f& n, const Vec3f& p,
     if(depth > 10)
         return src;
 
-    if(material.k > 0) {
-        Vec3f r = n * (2 * v.dotProduct(n)) - v;
-        Pixel rColor = trace(p, r, depth + 1);
-        src += rColor * material.k;
+    if(obj.material.k > 0) {
+        Vec3f r = obj.n * (2 * v.dotProduct(obj.n)) - v;
+        Pixel rColor = trace(obj.p, r, depth + 1);
+        src += rColor * obj.material.k;
     }
 
-    if(material.opacity < 1) {
-        Vec3f vt = (n * v.dotProduct(n)) - v;
+    if(obj.material.opacity < 1) {
+        Vec3f vt = (obj.n * v.dotProduct(obj.n)) - v;
         float sinThetaI = std::sqrt(vt.dotProduct(vt));
-        float sinTheta = sinThetaI / material.refraction;
+        float sinTheta = sinThetaI / obj.material.refraction;
         float cosTheta = std::sqrt(1 - sinTheta * sinTheta);
-        Vec3f r = vt.normalized() * sinTheta - n * cosTheta;
-        Pixel tColor = trace(p, r, depth + 1);
-        src += tColor * (1 - material.opacity);
+        Vec3f r = vt.normalized() * sinTheta - obj.n * cosTheta;
+        Pixel tColor = trace(obj.p, r, depth + 1);
+        src += tColor * (1 - obj.material.opacity);
     }
 
     return src;
