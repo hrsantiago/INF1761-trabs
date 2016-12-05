@@ -18,6 +18,8 @@ struct Scene
     Vec3f backgroundColor;
     Vec3f ambientLightColor;
     std::string texture;
+    float cx;
+    float cy;
 };
 
 struct Camera
@@ -194,6 +196,7 @@ private:
     ObjectIntersection intersection(const Vec3f& o, const Vec3f& d, float minOpacity = 0);
     Pixel trace(const Vec3f& o, const Vec3f& d, int depth);
     Pixel shade(const Vec3f& o, const Vec3f& d, const ObjectIntersection &obj, int depth);
+    Pixel getTexturePixel(const std::string& texture, float u, float v);
 
     std::string parseString(FILE *fp);
     Vec3f parseVec3f(FILE *fp);

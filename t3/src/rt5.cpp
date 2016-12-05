@@ -20,10 +20,13 @@ Image RT5::render()
     Vec3f ye = Vec3f::crossProduct(ze, xe);
 
     for(int y = 0; y < h; ++y) {
+        m_scene.cy = y;
         for(int x = 0; x < w; ++x) {
+            m_scene.cx = x;
             Vec3f o = m_camera.eye;
             Vec3f d = xe * b * (x / w - 0.5) + ye * a *(y / h - 0.5) - ze * m_camera.near;
-            image.pixel(x, y) = trace(o, d, 1);
+            Pixel pixel = trace(o, d, 1);
+            image.pixel(x, y) = pixel;
         }
     }
 
@@ -175,6 +178,8 @@ ObjectIntersection RT5::intersection(const Vec3f& o, const Vec3f& d, float minOp
 
                 i.u = l1 * triangle.tv1.x + l2 * triangle.tv2.x + l3 * triangle.tv3.x;
                 i.v = l1 * triangle.tv1.y + l2 * triangle.tv2.y + l3 * triangle.tv3.y;
+                i.u = std::fmod(i.u, 1); // weird
+                i.v = std::fmod(i.v, 1); // ?
             }
         }
     }
@@ -186,8 +191,15 @@ Pixel RT5::trace(const Vec3f& o, const Vec3f& d, int depth)
     ObjectIntersection i = intersection(o, d);
     if(i.valid)
         return shade(o, d, i, depth);
-    else
-        return Pixel(m_scene.backgroundColor.getX(), m_scene.backgroundColor.getY(), m_scene.backgroundColor.getZ());
+    else {
+        if(m_scene.texture.empty())
+            return Pixel(m_scene.backgroundColor.getX(), m_scene.backgroundColor.getY(), m_scene.backgroundColor.getZ());
+        else {
+            float u = m_scene.cx / m_camera.width;
+            float v = m_scene.cy / m_camera.height;
+            return getTexturePixel(m_scene.texture, u, v);
+        }
+    }
 }
 
 Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const ObjectIntersection& obj, int depth)
@@ -195,10 +207,7 @@ Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const ObjectIntersection& obj, 
     Vec3f kd = obj.material.kd;
 
     if(!obj.material.texture.empty()) {
-        Image& image = m_textures[obj.material.texture];
-        float x = std::round(obj.u * image.width());
-        float y = std::round(obj.v * image.height());
-        Pixel pixel = image.pixel(x, y);
+        Pixel pixel = getTexturePixel(obj.material.texture, obj.u, obj.v);
         kd = Vec3f(pixel.v0(), pixel.v1(), pixel.v2());
     }
 
@@ -238,6 +247,31 @@ Pixel RT5::shade(const Vec3f& o, const Vec3f& d, const ObjectIntersection& obj, 
     }
 
     return src;
+}
+
+Pixel RT5::getTexturePixel(const std::string& texture, float u, float v)
+{
+    Image& image = m_textures[texture];
+    //int x = std::round(u * (image.width() - 1));
+    //int y = std::round(v * (image.height() - 1));
+    //return image.pixel(x, y);
+
+    float x = u * (image.width() - 1);
+    float y = v * (image.height() - 1);
+
+    int x0 = std::floor(x);
+    int y0 = std::floor(y);
+    int x1 = std::ceil(x);
+    int y1 = std::ceil(y);
+
+    float dx = x - x0;
+    float dy = y - y0;
+
+    Pixel p = image.pixel(x0, y0) * (1 - dx) * (1 - dy) +
+            image.pixel(x1, y0) * dx * (1 - dy) +
+            image.pixel(x0, y1) * (1 - dx) * dy +
+            image.pixel(x1, y1) * dx * dy;
+    return p;
 }
 
 std::string RT5::parseString(FILE *fp)
